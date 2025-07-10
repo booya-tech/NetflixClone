@@ -7,6 +7,14 @@
 
 import UIKit
 
+enum Sections: Int {
+    case TrendingMovies = 0
+    case TrendingTv = 1
+    case Popular = 2
+    case Upcoming = 3
+    case TopRated = 4
+}
+
 class HomeViewController: UIViewController {
     let sectionTitles: [String] = ["Trending Movies", "Trending Tv", "Popular", "Upcoming Movies", "Top Rated"]
     
@@ -30,26 +38,12 @@ class HomeViewController: UIViewController {
         
         let headerView = HeroHeaderUIView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 500))
         homeFeedTable.tableHeaderView = headerView
-        
-        fetchData()
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
         homeFeedTable.frame = view.bounds
-    }
-    
-    private func fetchData() {
-        //        getTrendingNews()
-        
-        //        getTrendingTvs()
-        
-        //        getUpcomingMovies()
-        
-        //        getPopular()
-        
-        //        getTopRated()
     }
     
     private func getTrendingNews() {
@@ -93,15 +87,18 @@ class HomeViewController: UIViewController {
     }
     
     private func configureNavBar() {
-        var image = UIImage(named: "netflix-logo")
-        image = image?.withRenderingMode(.alwaysOriginal)
-        
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: image,
-            style: .done,
-            target: self,
-            action: nil
-        )
+        if let logoImage = UIImage(named: "netflix-logo") {
+            let resizedImage = UIGraphicsImageRenderer(size: CGSize(width: 20, height: 32)).image { _ in
+                logoImage.draw(in: CGRect(origin: .zero, size: CGSize(width: 20, height: 32)))
+            }.withRenderingMode(.alwaysOriginal)
+            
+            navigationItem.leftBarButtonItem = UIBarButtonItem(
+                image: resizedImage,
+                style: .done,
+                target: self,
+                action: nil
+            )
+        }
         
         navigationItem.rightBarButtonItems = [
             UIBarButtonItem(
@@ -133,6 +130,56 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: CollectionViewTableViewCell.identifier, for: indexPath) as? CollectionViewTableViewCell else {
+            return UITableViewCell()
+        }
+        
+        switch indexPath.section {
+        case Sections.TrendingMovies.rawValue:
+            APICaller.shared.getTrendingMovie { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        case Sections.TrendingTv.rawValue:
+            APICaller.shared.getTrendingTvs { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        case Sections.Popular.rawValue:
+            APICaller.shared.getPopular { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        case Sections.Upcoming.rawValue:
+            APICaller.shared.getUpcomingMovies { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        case Sections.TopRated.rawValue:
+            APICaller.shared.getTopRated { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        default:
             return UITableViewCell()
         }
         
