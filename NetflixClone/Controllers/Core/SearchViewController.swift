@@ -15,6 +15,14 @@ class SearchViewController: UIViewController {
         return table
     }()
     
+    private let searchController: UISearchController = {
+        let controller = UISearchController(searchResultsController: SearchResultViewController())
+        controller.searchBar.placeholder = "Search for a move or Tv show"
+        controller.searchBar.searchBarStyle = .minimal
+        
+        return controller
+    }()
+    
     var titles: [Title] = [Title]()
     
     override func viewDidLoad() {
@@ -29,6 +37,10 @@ class SearchViewController: UIViewController {
         
         discoverTable.delegate = self
         discoverTable.dataSource = self
+        
+        navigationItem.searchController = searchController
+        
+        searchController.searchResultsUpdater = self
         
         fetchDiscoverMovies()
     }
@@ -69,5 +81,29 @@ extension SearchViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 140
+    }
+}
+
+extension SearchViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        let searchBar = searchController.searchBar
+        
+        guard let query = searchBar.text,
+              !query.trimmingCharacters(in: .whitespaces).isEmpty,
+              query.trimmingCharacters(in: .whitespaces).count >= 3,
+              let resultController = searchController.searchResultsController as? SearchResultViewController
+        else { return }
+        
+        APICaller.shared.search(with: query) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let titles):
+                    resultController.titles = titles
+                    resultController.searchResultCollectionView.reloadData()
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        }
     }
 }
